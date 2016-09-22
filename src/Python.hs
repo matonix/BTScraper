@@ -3,47 +3,68 @@ module Python
   scrapePythonURL,
   ) where
 
-import Text.HTML.Scalpel hiding (URL)
+import Control.Monad
 import Debug.Trace
 import Data.Maybe
 import Data.UnixTime
 import Data.ByteString.Char8 (pack)
 import Data.ByteString (ByteString)
+import Data.List
 import Foreign.C.Types
-import Stats
+import qualified Stats as S
+import Stats (Stats)
+import Text.HTML.Scalpel hiding (URL)
 
-data PythonHistory
-  = PythonHistory {
-    date    :: ByteString,
-    user    :: ByteString,
-    action  :: ByteString,
-    args    :: ByteString
-  } deriving (Show, Eq)
+data PythonBTS = PythonBTS
+  { pythonPriority :: [String]
+  , pythonHistories :: [PythonHistory]
+  } deriving Show
 
-scrapePythonURL :: String -> IO Stats
-scrapePythonURL url = parsePythonHistory . fromJust <$> scrapeURL url histories
+data PythonHistory = PythonHistory
+  { date    :: String
+  , user    :: String
+  , action  :: String
+  , args    :: String
+  } deriving Show
+
+scrapePythonURL :: String -> IO (Maybe Stats)
+scrapePythonURL url = fmap parsePythonBTS <$> scrapeURL url bts
+
+bts :: Scraper String PythonBTS
+bts = PythonBTS <$> priority <*> histories
+
+priority :: Scraper String [String]
+priority = chroots ("fieldset" // "table") priority'
+  where
+    priority' :: Scraper String String
+    priority' = do
+      cols <- mfilter ((==4) . length) . texts $ "tr"
+      return $ cols !! 3
+
 
 histories :: Scraper String [PythonHistory]
 histories = chroots ("table" @: [hasClass "table-striped"] // "tr") history
+  where
+    history :: Scraper String PythonHistory
+    history = do
+      tds <- texts "td"
+      return PythonHistory
+        { date    = tds !! 0
+        , user    = tds !! 1
+        , action  = tds !! 2
+        , args    = tds !! 3
+        }
 
-history :: Scraper String PythonHistory
-history = do
-  tds <- map pack <$> innerHTMLs "td"
-  return PythonHistory {
-    date    = head tds,
-    user    = tds !! 1,
-    action  = tds !! 2,
-    args    = tds !! 3
+parsePythonBTS :: PythonBTS -> Stats
+parsePythonBTS bts = S.Stats
+  { S.period = udtSeconds $ diffUnixTime new old
+  , S.priority = (!! 1) . words . head $ pythonPriority bts
+  , S.reopen = pred . length . filter (isPrefixOf "-> closed") . tails $ concatMap args hists
   }
-
-parsePythonHistory :: [PythonHistory] -> Stats
-parsePythonHistory hist = Stats {
-    period = udtSeconds $ diffUnixTime new old,
-    priority = "normal",
-    reopen = 0
-  } where
-    new = parsePythonTime . date . head $ hist
-    old = parsePythonTime . date . last $ hist
+    where
+      hists = pythonHistories bts :: [PythonHistory]
+      new = parsePythonTime . pack . date . head $ hists
+      old = parsePythonTime . pack . date . last $ hists
 
 parsePythonTime :: ByteString -> UnixTime
 parsePythonTime = parseUnixTime . pack $ "%Y-%m-%d&nbsp;%H:%M:%S"
