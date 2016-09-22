@@ -16,8 +16,11 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Python
+                     , Stats
   build-depends:       base >= 4.7 && < 5
                      , scalpel
+                     , unix-time
+                     , bytestring
   default-language:    Haskell2010
 
 executable BTScraper
@@ -26,7 +29,6 @@ executable BTScraper
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , BTScraper
-                     , scalpel
   default-language:    Haskell2010
 
 test-suite BTScraper-test
