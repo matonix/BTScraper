@@ -4,9 +4,10 @@ module Stats
     ) where
 
 import Foreign.C.Types
+import Data.ByteString (ByteString)
 
 data Stats = Stats {
   period :: CTime,
-  priority :: String,
+  priority :: ByteString,
   reopen :: Int
 } deriving (Show, Eq)
