@@ -1,3 +1,3 @@
 # BTScraper
 
-Web Scraper for Bug Tracking System
+Web Scraper for (specific) Bug Tracking System
