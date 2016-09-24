@@ -4,10 +4,12 @@
 module Stats
   ( Stats(..)
   , writeStats
+  , printStats
   ) where
 
 import           Data.Binary
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Csv
 import           Data.Int
 import           Foreign.C.Types
@@ -33,5 +35,8 @@ instance DefaultOrdered Stats where
 
 instance Binary Stats
 
-writeStats :: [Stats] -> IO ()
-writeStats = print . encodeDefaultOrderedByName
+writeStats :: FilePath -> [Stats] -> IO ()
+writeStats f = BL.writeFile f . encodeDefaultOrderedByName
+
+printStats :: [Stats] -> IO ()
+printStats = print . encodeDefaultOrderedByName
