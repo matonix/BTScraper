@@ -17,12 +17,14 @@ library
   hs-source-dirs:      src
   exposed-modules:     Python
                      , Stats
+                     , Cache
   build-depends:       base >= 4.7 && < 5
                      , scalpel
                      , unix-time
                      , bytestring
                      , cassava
                      , vector
+                     , binary
   default-language:    Haskell2010
 
 executable BTScraper

@@ -1,15 +1,21 @@
 module Main where
 
-import System.Environment (getArgs)
-import Python
+import           Control.Exception.Base
+import           System.Environment     (getArgs)
+-- import System.IO
+import           Python
+import           Stats
+import           Cache
 
 -- url = "http://bugs.python.org/issue24022"
-csv = "/home/maton/experimentBTS/query02.csv"
+workingDir = "/home/maton/experimentBTS/"
+csv = "query03.csv"
 
-usage = putStrLn "Usage: cmd filename"
+-- usage = putStrLn "Usage: cmd filename"
 
 main :: IO ()
-main = scrapePythonCsv csv >>= print
+main = scrapeWithCache (workingDir ++ csv) scrapePythonCSV writeStats
+
 -- main = do
 --   args <- getArgs
 --   if length args /= 1
