@@ -25,6 +25,7 @@ library
                      , cassava
                      , vector
                      , binary
+                     , time
   default-language:    Haskell2010
 
 executable BTScraper

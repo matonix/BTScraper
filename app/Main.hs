@@ -1,11 +1,11 @@
 module Main where
 
+import           Cache
 import           Control.Exception.Base
-import           System.Directory
-import           System.Environment     (getArgs)
 import           Python
 import           Stats
-import           Cache
+import           System.Directory
+import           System.Environment     (getArgs)
 
 -- url = "http://bugs.python.org/issue24022"
 workingDir = "/home/maton/experimentBTS/"

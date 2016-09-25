@@ -8,16 +8,16 @@ module Stats
   ) where
 
 import           Data.Binary
-import           Data.ByteString (ByteString)
+import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Csv
 import           Data.Int
 import           Foreign.C.Types
-import           GHC.Generics    (Generic)
+import           GHC.Generics               (Generic)
 
 data Stats = Stats
   { issueNum :: Int
-  , period   :: Int64
+  , period   :: Integer
   , priority :: ByteString
   , reopen   :: Int
   } deriving (Show,Generic)
