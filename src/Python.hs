@@ -32,12 +32,12 @@ getIssueNums = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
 -- for scraping python issue
 
 type PythonFieldSet = [ByteString]
-type PythonMessage  = [ByteString]
+-- type PythonMessage  = [ByteString]
 type PythonHistory  = [ByteString]
 
 data PythonIssue = PythonIssue
   { pythonFieldSets :: [PythonFieldSet]
-  , pythonMessages  :: [PythonMessage]
+  -- , pythonMessages  :: [PythonMessage]
   , pythonHistories :: [PythonHistory]
   } deriving Show
 
@@ -50,13 +50,14 @@ scrapePythonIssue issueNum =
     url = "http://bugs.python.org/issue" ++ show issueNum
 
 issue :: Scraper ByteString PythonIssue
-issue = PythonIssue <$> fieldSets <*> messages <*> histories
+-- issue = PythonIssue <$> fieldSets <*> messages <*> histories
+issue = PythonIssue <$> fieldSets <*> histories
 
 fieldSets :: Scraper ByteString [PythonFieldSet]
 fieldSets = chroots ("fieldset" // "table") $ texts "td"
 
-messages :: Scraper ByteString [PythonMessage]
-messages = chroots ("table" @: [hasClass "messages"])
+-- messages :: Scraper ByteString [PythonMessage]
+-- messages = chroots ("table" @: [hasClass "messages"])
 
 histories :: Scraper ByteString [PythonHistory]
 histories = chroots ("table" @: [hasClass "table-striped"] // "tr") $ texts "td"
