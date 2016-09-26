@@ -1,23 +1,5 @@
 module Main where
 
-<<<<<<< HEAD
-import           Control.Exception.Base
-import           System.Directory
-import           System.Environment     (getArgs)
-import           Python
-import           Stats
-import           Cache
-
--- url = "http://bugs.python.org/issue24022"
-workingDir = "/home/maton/experimentBTS/"
-queryCsv = "query02.csv"
-statsCsv = "stats02.csv"
-
-main :: IO ()
-main = scrapeWithCache queryPath scrapePythonCSV $ writeStats statsPath where
-  queryPath = workingDir ++ queryCsv
-  statsPath = workingDir ++ statsCsv
-=======
 import           Cache
 import           Control.Exception.Base
 import           Python
@@ -37,7 +19,6 @@ main = scrapeWithCache queryPath scrapePythonCSV $ writeStats statsPath where
   queryPath = workingDir ++ queryCsv
   statsPath = workingDir ++ statsCsv
 
->>>>>>> issue1
 -- main = do
 --   args <- getArgs
 --   if length args /= 1
