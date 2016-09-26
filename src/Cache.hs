@@ -17,7 +17,7 @@ import           System.IO
  -}
 scrapeWithCache :: FilePath -> (FilePath  -> IO [Stats]) -> ([Stats] -> IO a) -> IO a
 scrapeWithCache file scraper consumer =
-  catch (decodeFile cacheFile) doCache >>= consumer where
+  catch (doDecodeFile cacheFile) doCache >>= consumer where
     cacheFile = file ++ ".statscache"
     doCache :: IOException -> IO [Stats]
     doCache e = do
@@ -29,8 +29,8 @@ scrapeWithCache file scraper consumer =
       encodeFile cacheFile stats
       traceIO $ "done. -> " ++ cacheFile
       return stats
-    decodeFile :: FilePath -> IO [Stats]
-    decodeFile f = do
+    doDecodeFile :: FilePath -> IO [Stats]
+    doDecodeFile f = do
       result <- decodeFileOrFail f
       case result of
         Right x -> do

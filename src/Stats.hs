@@ -12,12 +12,13 @@ import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Csv
 import           Data.Int
+import           Data.Time
 import           Foreign.C.Types
 import           GHC.Generics               (Generic)
 
 data Stats = Stats
   { issueNum :: Int
-  , period   :: Integer
+  , period   :: String
   , priority :: ByteString
   , reopen   :: Int
   } deriving (Show,Generic)
