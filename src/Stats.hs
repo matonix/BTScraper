@@ -10,6 +10,7 @@ module Stats
 import           Data.Binary
 import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as BL
+import qualified Data.ByteString.Char8 as BS
 import           Data.Csv
 import           Data.Int
 import           Data.Time
@@ -18,21 +19,23 @@ import           GHC.Generics               (Generic)
 
 data Stats = Stats
   { issueNum :: Int
-  , period   :: String
+  , period   :: Int
   , priority :: ByteString
   , reopen   :: Int
+  , commits  :: [ByteString]
   } deriving (Show,Generic)
 
 instance ToNamedRecord Stats where
-  toNamedRecord (Stats issueNum period priority reopen) = namedRecord
+  toNamedRecord (Stats issueNum period priority reopen commits) = namedRecord
     [ "issueNum" .= issueNum
     , "period"   .= period
     , "priority" .= priority
     , "reopen"   .= reopen
+    , "commits"  .= BS.intercalate " " commits
     ]
 
 instance DefaultOrdered Stats where
-  headerOrder _ = header ["issueNum", "period", "priority", "reopen"]
+  headerOrder _ = header ["issueNum", "period", "priority", "reopen", "commits"]
 
 instance Binary Stats
 

@@ -1,5 +1,6 @@
 module Python
   ( scrapePythonURL
+  , scrapePythonIssue
   , scrapePythonCSV
   ) where
 
@@ -17,6 +18,7 @@ import           Debug.Trace
 import           Foreign.C.Types
 import           Stats
 import           Text.HTML.Scalpel          hiding (URL)
+import           Text.Regex
 
 scrapePythonCSV :: FilePath -> IO [Stats]
 scrapePythonCSV csvFile = do
@@ -32,12 +34,12 @@ getIssueNums = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
 -- for scraping python issue
 
 type PythonFieldSet = [ByteString]
--- type PythonMessage  = [ByteString]
+type PythonMessage  = ByteString
 type PythonHistory  = [ByteString]
 
 data PythonIssue = PythonIssue
   { pythonFieldSets :: [PythonFieldSet]
-  -- , pythonMessages  :: [PythonMessage]
+  , pythonMessages  :: [PythonMessage]
   , pythonHistories :: [PythonHistory]
   } deriving Show
 
@@ -50,32 +52,44 @@ scrapePythonIssue issueNum =
     url = "http://bugs.python.org/issue" ++ show issueNum
 
 issue :: Scraper ByteString PythonIssue
--- issue = PythonIssue <$> fieldSets <*> messages <*> histories
-issue = PythonIssue <$> fieldSets <*> histories
+issue = PythonIssue <$> fieldSets <*> messages <*> histories
 
 fieldSets :: Scraper ByteString [PythonFieldSet]
 fieldSets = chroots ("fieldset" // "table") $ texts "td"
 
--- messages :: Scraper ByteString [PythonMessage]
--- messages = chroots ("table" @: [hasClass "messages"])
+messages :: Scraper ByteString [PythonMessage]
+messages = texts ("a" @: ["href" @=~ regexCommitId]) where
+  regexCommitId = mkRegex "http://hg.python.org/lookup/" :: Regex
 
 histories :: Scraper ByteString [PythonHistory]
 histories = chroots ("table" @: [hasClass "table-striped"] // "tr") $ texts "td"
 
 parsePythonIssue :: Int -> PythonIssue -> Stats
 parsePythonIssue inum issue = Stats
-  { issueNum = inum
-  , period = init . show $ diffUTCTime new old
-  , priority = pythonFieldSets issue !! 1 !! 6
-  , reopen = pred . length . filter containsClosed $ map (!! 3) hists
+  { issueNum  = inum
+  , period    = parsePeriod $ pythonHistories issue
+  , priority  = parsePriority $ pythonFieldSets issue
+  , reopen    = parseReopen $ pythonHistories issue
+  , commits   = parseCommits $ pythonMessages issue
   } where
-    hists = pythonHistories issue :: [PythonHistory]
-    time = parsePythonTime . BS.unpack . (!! 0)
-    new = time $ head hists
-    old = time $ last hists
-    containsClosed = BS.isInfixOf $ BS.pack "-> closed"
 
-parsePythonTime :: String -> UTCTime
-parsePythonTime = parseTimeOrError True defaultTimeLocale "%F\160\&%T"
+
+parsePeriod :: [PythonHistory] -> Int
+parsePeriod hists = read . init . show $ diffUTCTime new old where
+  time = parseTime . BS.unpack . (!! 0)
+  new = time $ head hists
+  old = time $ last hists
+  parseTime :: String -> UTCTime
+  parseTime = parseTimeOrError True defaultTimeLocale "%F\160\&%T"
+
+parsePriority :: [PythonFieldSet] -> ByteString
+parsePriority = (!! 6) . (!! 1)
+
+parseReopen :: [PythonHistory] -> Int
+parseReopen = pred . length . filter containsClosed . map (!! 3) where
+  containsClosed = BS.isInfixOf $ BS.pack "-> closed"
+
+parseCommits :: [PythonMessage] -> [ByteString]
+parseCommits = id
 
 -- New changeset <a href="http://hg.python.org/lookup/810d70fb17a2">810d70fb17a2</a> by Serhiy Storchaka in branch 'default':

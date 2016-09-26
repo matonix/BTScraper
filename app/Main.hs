@@ -2,18 +2,20 @@ module Main where
 
 import           Cache
 import           Control.Exception.Base
+import           Data.Maybe
 import           Python
 import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
--- url = "http://bugs.python.org/issue24022"
+url = "http://bugs.python.org/issue24022"
+issue = 24022
 workingDir = "/home/maton/experimentBTS/"
-queryCsv = "query03.csv"
-statsCsv = "stats03.csv"
+queryCsv = "query02.csv"
+statsCsv = "stats02.csv"
 
 main :: IO ()
--- main = scrapePythonURL url >>= print
+-- main = scrapePythonIssue issue >>= printStats . maybeToList
 -- main = scrapePythonCSV queryPath >>= writeStats statsPath where
 main = scrapeWithCache queryPath scrapePythonCSV $ writeStats statsPath where
   queryPath = workingDir ++ queryCsv
