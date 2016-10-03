@@ -64,6 +64,8 @@ messages = texts ("a" @: ["href" @=~ regexCommitId]) where
 histories :: Scraper ByteString [PythonHistory]
 histories = chroots ("table" @: [hasClass "table-striped"] // "tr") $ texts "td"
 
+-- parse into stats
+
 parsePythonIssue :: Int -> PythonIssue -> Stats
 parsePythonIssue inum issue = Stats
   { issueNum  = inum
@@ -71,8 +73,7 @@ parsePythonIssue inum issue = Stats
   , priority  = parsePriority $ pythonFieldSets issue
   , reopen    = parseReopen $ pythonHistories issue
   , commits   = parseCommits $ pythonMessages issue
-  } where
-
+  }
 
 parsePeriod :: [PythonHistory] -> Int
 parsePeriod hists = read . init . show $ diffUTCTime new old where
@@ -91,5 +92,3 @@ parseReopen = pred . length . filter containsClosed . map (!! 3) where
 
 parseCommits :: [PythonMessage] -> [ByteString]
 parseCommits = id
-
--- New changeset <a href="http://hg.python.org/lookup/810d70fb17a2">810d70fb17a2</a> by Serhiy Storchaka in branch 'default':

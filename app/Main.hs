@@ -8,6 +8,7 @@ import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
+-- url =
 -- url = "http://bugs.python.org/issue24022"
 -- issue = 24022
 -- workingDir = "/home/maton/experimentBTS/"
