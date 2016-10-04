@@ -1,8 +1,24 @@
 module Github
   ( scrapeGithubURL
-  -- , scrapeGithubIssue
+  , scrapeGithubIssue
   -- , scrapeGithubCSV
   ) where
+
+import           Control.Monad
+import           Data.ByteString            (ByteString)
+import qualified Data.ByteString.Char8      as BS
+import qualified Data.ByteString.Lazy.Char8 as BL
+import           Data.Csv
+import           Data.Fixed
+import           Data.Int
+import           Data.Maybe                 (catMaybes, fromJust, mapMaybe)
+import           Data.Time
+import qualified Data.Vector                as V
+import           Debug.Trace
+import           Foreign.C.Types
+import           Stats
+import           Text.HTML.Scalpel          hiding (URL)
+import           Text.Regex
 
 -- scrapeGithubCSV :: FilePath -> IO [Stats]
 -- scrapeGithubCSV csvFile = do
@@ -22,43 +38,53 @@ type StateClosed = ByteString
 type CommitId = ByteString
 
 data GithubIssue = GithubIssue
-  { relativeTimes :: [RelativeTime]
-  , stateClosed :: [StateClosed]
-  , commitId :: [CommitId]
+  { githubRelativeTimes :: [RelativeTime]
+  , githubStateClosed :: [StateClosed]
+  , githubCommitId :: [CommitId]
   } deriving Show
 
 scrapeGithubURL :: String -> IO (Maybe GithubIssue)
 scrapeGithubURL url = scrapeURL url issue
 
-issue :: Spraper ByteString GithubIssue
-issue = GithubIssue <$> relativeTime <*> stateClosed <*> commitId
+scrapeGithubIssue :: Int -> IO (Maybe Stats)
+scrapeGithubIssue issueNum =
+  fmap (parseGithubIssue issueNum) <$> scrapeURL url issue where
+    url = "https://github.com/google/closure-compiler/issues/" ++ show issueNum
+
+issue :: Scraper ByteString GithubIssue
+issue = GithubIssue <$> relativeTimes <*> stateClosed <*> commitId
 
 relativeTimes :: Scraper ByteString [RelativeTime]
 relativeTimes = texts "relative-time"
 
 stateClosed :: Scraper ByteString [StateClosed]
-stateClosed = texts ("div" @: [hasClass "state-closed"])
+stateClosed = texts ("svg" @: [hasClass "octicon-issue-closed"])
 
 commitId :: Scraper ByteString [CommitId]
-commitId = chroots ("td" @: [hasClass "commit-meta"]) $ attr "a"
+commitId = chroots ("td" @: [hasClass "commit-meta"]) $ attr "href" "a"
 
 -- parse into stats
 
 parseGithubIssue :: Int -> GithubIssue -> Stats
 parseGithubIssue inum issue = Stats
   { issueNum  = inum
-  , period    = parsePeriod $ relativeTimes issue
-  , priority  = "not available"
-  , reopen    = parseReopen $ stateClosed issue
-  , commits   = parseCommits $ commitId issue
+  , period    = parsePeriod $ githubRelativeTimes issue
+  , priority  = BS.pack "not available"
+  , reopen    = parseReopen $ githubStateClosed issue
+  , commits   = parseCommits $ githubCommitId issue
   }
 
 parsePeriod :: [RelativeTime] -> Int
-parsePeriod relativeTimes = maximum times - minimum times where
-  times = map parseTime relativeTimes
+parsePeriod relativeTimes = read . init . show $ diffUTCTime new old where
+  new = minimum times
+  old = maximum times
+  times = map (parseTime . BS.unpack) relativeTimes
+  -- Sep 29, 2016
   parseTime :: String -> UTCTime
-  parseTime = parseTimeOrError True defaultTimeLocale "%F\160\&%T"
+  parseTime = parseTimeOrError True defaultTimeLocale "%b %e, %Y"
 
 parseReopen :: [StateClosed] -> Int
+parseReopen = pred . length
 
-parseCommits :: [parseCommits] -> [ByteString]
+parseCommits :: [CommitId] -> [ByteString]
+parseCommits = map (last . BS.split '/')
