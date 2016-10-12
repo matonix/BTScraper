@@ -18,7 +18,9 @@ library
   exposed-modules:     Python
                      , Stats
                      , Cache
+                     , Csv
                      , Github
+                     , GithubCommit
   build-depends:       base >= 4.7 && < 5
                      , scalpel
                      , bytestring

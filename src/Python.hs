@@ -5,10 +5,11 @@ module Python
   ) where
 
 import           Control.Monad
+import           Csv
 import           Data.ByteString            (ByteString)
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BL
-import           Data.Csv
+import           Data.Csv                   (Csv)
 import           Data.Fixed
 import           Data.Int
 import           Data.Maybe                 (catMaybes, fromJust, mapMaybe)
@@ -22,11 +23,8 @@ import           Text.Regex
 
 scrapePythonCSV :: FilePath -> IO [Stats]
 scrapePythonCSV csvFile = do
-  Right csv <- parseCSV csvFile
+  Right csv <- readCSV csvFile
   catMaybes <$> mapM scrapePythonIssue (getIssueNums csv)
-
-parseCSV :: FilePath -> IO (Either String Csv)
-parseCSV csvFile = decode NoHeader <$> BL.readFile csvFile
 
 getIssueNums :: Csv -> [Int]
 getIssueNums = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
