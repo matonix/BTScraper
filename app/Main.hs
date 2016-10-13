@@ -5,16 +5,20 @@ import           Control.Exception.Base
 import           Data.Maybe
 import           Github
 import           GithubCommit
+import           Jira
 import           Python
 import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
-workingDir = "/home/maton/experimentBTS/"
-inFile = workingDir ++ "Lang-commit-db.csv"
-outFile = workingDir ++ "Lang-commit-issue-db.csv"
-logFile = workingDir ++ "commons-lang-log"
-main = linkGitlogCommitToIssueCSV logFile inFile outFile
+url = "https://issues.apache.org/jira/browse/LANG-747"
+main = scrapeJiraURL url >>= print
+
+-- workingDir = "/home/maton/experimentBTS/"
+-- inFile = workingDir ++ "Math-commit-db.csv"
+-- outFile = workingDir ++ "Math-commit-issue-db.csv"
+-- logFile = workingDir ++ "commons-math-log"
+-- main = linkGitlogCommitToIssueCSV logFile inFile outFile
 
 -- commit = "1dfad5043a207e032a78ef50c3cba50488bcd300"
 -- prefix = "https://github.com/google/closure-compiler/commit/"

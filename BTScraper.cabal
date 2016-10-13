@@ -21,6 +21,7 @@ library
                      , Csv
                      , Github
                      , GithubCommit
+                     , Jira
   build-depends:       base >= 4.7 && < 5
                      , scalpel
                      , bytestring

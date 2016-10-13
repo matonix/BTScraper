@@ -61,10 +61,17 @@ commit = BS.append <$> commitTitle <*> commitDesc where
   commitDesc = text ("div" @: [hasClass "commit-desc"])
 
 -- for Commons-lang
+-- parseGitLog :: [[ByteString]] -> ByteString -> ByteString
+-- parseGitLog logs commitId = pickIssueId . find lang . fromMaybe [] $ find (\a -> head a == commitId) logs where
+--   lang = BS.isInfixOf (BS.pack "LANG-")
+--   pickIssueId a = readIntEmpty . BS.filter isDigit $ maybeEmpty a
+
+-- for Commons-math
 parseGitLog :: [[ByteString]] -> ByteString -> ByteString
 parseGitLog logs commitId = pickIssueId . find lang . fromMaybe [] $ find (\a -> head a == commitId) logs where
-  lang = BS.isInfixOf (BS.pack "LANG-")
+  lang = BS.isInfixOf (BS.pack "MATH-")
   pickIssueId a = readIntEmpty . BS.filter isDigit $ maybeEmpty a
+
 
 -- for Joda-time
 parseIssueId :: Maybe ByteString -> ByteString
