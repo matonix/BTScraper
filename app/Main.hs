@@ -11,8 +11,9 @@ import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
-url = "https://issues.apache.org/jira/browse/LANG-747"
-main = scrapeJiraURL url >>= print
+db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
+url = "https://issues.apache.org/jira/browse/LANG-747?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
+main = makeJiraStats url db >>= print
 
 -- workingDir = "/home/maton/experimentBTS/"
 -- inFile = workingDir ++ "Math-commit-db.csv"
