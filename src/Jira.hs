@@ -101,6 +101,8 @@ parseTimeToSeconds = sum . map parseEach . filter ((>1) . BS.length) . BS.words
       'd' -> (*86400) .  fst . fromJust $ BS.readInt str
       'h' -> (*3600) . fst . fromJust $ BS.readInt str
       'm' -> (*60) . fst . fromJust $ BS.readInt str
+      's' -> fst . fromJust $ BS.readInt str
+      _ -> error $ "parseTimeToSeconds: no parse \"" ++ show str ++ "\""
 
 isReopen :: ByteString -> Bool
 isReopen = BS.isInfixOf (BS.pack "Reopened")

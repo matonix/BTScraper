@@ -11,8 +11,15 @@ import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
-db = "/home/maton/experimentBTS/Lang-commit-issue-db-mini.csv"
-main = makeJiraStatsCSV db >>= print
+workingDir = "/home/maton/experimentBTS/"
+queryCsv = "Lang-commit-issue-db.csv"
+statsCsv = "Lang-stats.csv"
+main = scrapeWithCache queryPath makeJiraStatsCSV $ writeStats statsPath where
+  queryPath = workingDir ++ queryCsv
+  statsPath = workingDir ++ statsCsv
+
+-- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
+-- main = makeJiraStatsCSV db >>= print
 
 -- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
 -- url = "https://issues.apache.org/jira/browse/LANG-747?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
