@@ -1,7 +1,7 @@
 module Python
   ( scrapePythonURL
-  , scrapePythonIssue
-  , scrapePythonCSV
+  , makePythonStats
+  , makePythonStatsCSV
   ) where
 
 import           Control.Monad
@@ -21,13 +21,13 @@ import           Stats
 import           Text.HTML.Scalpel          hiding (URL)
 import           Text.Regex
 
-scrapePythonCSV :: FilePath -> IO [Stats]
-scrapePythonCSV csvFile = do
+makePythonStatsCSV :: FilePath -> IO [Stats]
+makePythonStatsCSV csvFile = do
   Right csv <- readCSV csvFile
-  catMaybes <$> mapM scrapePythonIssue (getIssueNums csv)
+  catMaybes <$> mapM makePythonStats (getIssueIds csv)
 
-getIssueNums :: Csv -> [Int]
-getIssueNums = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
+getIssueIds :: Csv -> [Int]
+getIssueIds = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
 
 -- for scraping python issue
 
@@ -44,10 +44,10 @@ data PythonIssue = PythonIssue
 scrapePythonURL :: String -> IO (Maybe PythonIssue)
 scrapePythonURL url = scrapeURL url issue
 
-scrapePythonIssue :: Int -> IO (Maybe Stats)
-scrapePythonIssue issueNum =
-  fmap (parsePythonIssue issueNum) <$> scrapeURL url issue where
-    url = "http://bugs.python.org/issue" ++ show issueNum
+makePythonStats :: Int -> IO (Maybe Stats)
+makePythonStats issueId =
+  fmap (parsePythonIssue issueId) <$> scrapeURL url issue where
+    url = "http://bugs.python.org/issue" ++ show issueId
 
 issue :: Scraper ByteString PythonIssue
 issue = PythonIssue <$> fieldSets <*> messages <*> histories
@@ -66,12 +66,11 @@ histories = chroots ("table" @: [hasClass "table-striped"] // "tr") $ texts "td"
 
 parsePythonIssue :: Int -> PythonIssue -> Stats
 parsePythonIssue inum issue = Stats
-  { issueNum  = inum
-  , period    = parsePeriod $ pythonHistories issue
-  , priority  = parsePriority $ pythonFieldSets issue
-  , reopen    = parseReopen $ pythonHistories issue
-  , commits   = parseCommits $ pythonMessages issue
-  }
+  inum
+  (parsePeriod $ pythonHistories issue)
+  (parsePriority $ pythonFieldSets issue)
+  (parseReopen $ pythonHistories issue)
+  (parseCommits $ pythonMessages issue)
 
 parsePeriod :: [PythonHistory] -> Int
 parsePeriod hists = read . init . show $ diffUTCTime new old where

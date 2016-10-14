@@ -4,6 +4,7 @@ module Jira
     ( scrapeJiraURL
     , parseIssue
     , makeJiraStats
+    , makeJiraStatsCSV
     ) where
 
 import           Control.Monad
@@ -13,16 +14,17 @@ import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BL
 import           Data.Char                  (isDigit)
 import           Data.Csv
-import           Data.Maybe                 (fromJust)
+import           Data.Maybe                 (catMaybes, fromJust)
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
 import           Debug.Trace
 import           GHC.Generics               (Generic)
-import           Stats
+import           Stats                      (Stats)
+import qualified Stats                      as S
 import           Text.HTML.Scalpel
 
 data JiraIssue = JiraIssue
-  { jiraIssueNum   :: ByteString
+  { jiraIssueId    :: ByteString
   , jiraPriority   :: ByteString
   , jiraTransition :: JiraTransition
   } deriving Show
@@ -44,23 +46,32 @@ data CommitIssue = CommitIssue
 
 instance FromRecord CommitIssue
 
+makeJiraStatsCSV :: FilePath -> IO [Stats]
+makeJiraStatsCSV dbCsv = do
+  Right db <- fmap V.toList <$> readCSV dbCsv
+  let prefix = "https://issues.apache.org/jira/browse/LANG-"
+  let suffix = "?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
+  let urls = map ((\i -> prefix++show i++suffix) . issueId) db :: [URL]
+  map (parseIssue db) .catMaybes <$> mapM scrapeJiraURL urls
+
+-- for test
 makeJiraStats :: URL -> FilePath -> IO Stats
 makeJiraStats url dbCsv = do
   Just issue <- scrapeJiraURL url
-  Right db <- readCSV dbCsv
-  return $ parseIssue issue (V.toList db)
+  Right db <- fmap V.toList <$> readCSV dbCsv
+  return $ parseIssue db issue
 
 scrapeJiraURL :: URL -> IO (Maybe JiraIssue)
 scrapeJiraURL url = scrapeURL url scrapeIssue
 
 scrapeIssue :: Scraper ByteString JiraIssue
 scrapeIssue = JiraIssue
-  <$> scrapeIssueNum
+  <$> scrapeIssueId
   <*> scrapePriority
   <*> scrapeJiraTransitions
 
-scrapeIssueNum :: Scraper ByteString ByteString
-scrapeIssueNum = attr "content" $ "meta" @: ["name" @= "ajs-issue-key"]
+scrapeIssueId :: Scraper ByteString ByteString
+scrapeIssueId = attr "content" $ "meta" @: ["name" @= "ajs-issue-key"]
 
 scrapePriority :: Scraper ByteString ByteString
 scrapePriority = attr "alt" $ "span" @: ["id" @= "priority-val"] // "img"
@@ -74,14 +85,14 @@ scrapeJiraTransitions = chroot ("div" @: ["id" @= "issue_actions_container"])
   <*> texts ("td" @: ["width" @= "18%"] // "a")
   <*> texts ("td" @: ["width" @= "18%", "align" @= "right"])
 
-parseIssue :: JiraIssue -> [CommitIssue] -> Stats
-parseIssue ji db = Stats issueNum period priority reopen commits
+parseIssue :: [CommitIssue] -> JiraIssue -> Stats
+parseIssue db ji = S.Stats issueid period priority reopen commits
   where
-    issueNum = fst . fromJust . BS.readInt . BS.filter isDigit . jiraIssueNum $ ji
+    issueid = fst . fromJust . BS.readInt . BS.filter isDigit . jiraIssueId $ ji
     period = sum . map parseTimeToSeconds . timeInSourceStatus . jiraTransition $ ji
     priority = jiraPriority ji
     reopen = (`div` 2) . length . filter isReopen . transition . jiraTransition $ ji
-    commits = map newCommitId $ filter ((== issueNum) . issueId) db
+    commits = map newCommitId $ filter ((== issueid) . issueId) db
 
 parseTimeToSeconds :: ByteString -> Int
 parseTimeToSeconds = sum . map parseEach . filter ((>1) . BS.length) . BS.words

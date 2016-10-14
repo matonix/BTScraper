@@ -24,10 +24,10 @@ import           Text.Regex
 -- scrapeGithubCSV :: FilePath -> IO [Stats]
 -- scrapeGithubCSV csvFile = do
 --   Right csv <- readCSV csvFile
---   catMaybes <$> mapM scrapeGithubIssue (getIssueNums csv)
+--   catMaybes <$> mapM scrapeGithubIssue (getIssueIds csv)
 
--- getIssueNums :: Csv -> [Int]
--- getIssueNums = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
+-- getIssueIds :: Csv -> [Int]
+-- getIssueIds = map fst . mapMaybe (BS.readInt . (V.! 1)) . V.toList
 
 -- for scraping github issue
 
@@ -45,9 +45,9 @@ scrapeGithubURL :: String -> IO (Maybe GithubIssue)
 scrapeGithubURL url = scrapeURL url issue
 
 scrapeGithubIssue :: Int -> IO (Maybe Stats)
-scrapeGithubIssue issueNum =
-  fmap (parseGithubIssue issueNum) <$> scrapeURL url issue where
-    url = "https://github.com/google/closure-compiler/issues/" ++ show issueNum
+scrapeGithubIssue issueId =
+  fmap (parseGithubIssue issueId) <$> scrapeURL url issue where
+    url = "https://github.com/google/closure-compiler/issues/" ++ show issueId
 
 issue :: Scraper ByteString GithubIssue
 issue = GithubIssue <$> relativeTimes <*> stateClosed <*> commitId
@@ -65,12 +65,11 @@ commitId = chroots ("td" @: [hasClass "commit-meta"]) $ attr "href" "a"
 
 parseGithubIssue :: Int -> GithubIssue -> Stats
 parseGithubIssue inum issue = Stats
-  { issueNum  = inum
-  , period    = parsePeriod $ githubRelativeTimes issue
-  , priority  = BS.pack "not available"
-  , reopen    = parseReopen $ githubStateClosed issue
-  , commits   = parseCommits $ githubCommitId issue
-  }
+  inum
+  (parsePeriod $ githubRelativeTimes issue)
+  (BS.pack "not available")
+  (parseReopen $ githubStateClosed issue)
+  (parseCommits $ githubCommitId issue)
 
 parsePeriod :: [RelativeTime] -> Int
 parsePeriod relativeTimes = read . init . show $ diffUTCTime new old where

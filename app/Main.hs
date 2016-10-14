@@ -11,9 +11,12 @@ import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
-db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
-url = "https://issues.apache.org/jira/browse/LANG-747?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
-main = makeJiraStats url db >>= print
+db = "/home/maton/experimentBTS/Lang-commit-issue-db-mini.csv"
+main = makeJiraStatsCSV db >>= print
+
+-- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
+-- url = "https://issues.apache.org/jira/browse/LANG-747?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
+-- main = makeJiraStats url db >>= print
 
 -- workingDir = "/home/maton/experimentBTS/"
 -- inFile = workingDir ++ "Math-commit-db.csv"
@@ -39,7 +42,7 @@ main = makeJiraStats url db >>= print
 -- workingDir = "/home/maton/experimentBTS/"
 -- queryCsv = "query02.csv"
 -- statsCsv = "stats02.csv"
--- main = scrapeWithCache queryPath scrapePythonCSV $ writeStats statsPath where
+-- main = scrapeWithCache queryPath makePythonStatsCSV $ writeStats statsPath where
 --   queryPath = workingDir ++ queryCsv
 --   statsPath = workingDir ++ statsCsv
 
@@ -51,4 +54,4 @@ main = makeJiraStats url db >>= print
 --       workingDir <-  getCurrentDirectory
 --       let queryPath = workingDir ++ args !! 0
 --       let statsPath = workingDir ++ args !! 1
---       scrapeWithCache queryPath scrapePythonCSV $ writeStats statsPath
+--       scrapeWithCache queryPath makePythonStatsCSV $ writeStats statsPath
