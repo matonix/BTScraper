@@ -3,6 +3,7 @@
 module GithubCommit
   ( linkGithubCommitToIssueCSV
   , linkGitlogCommitToIssueCSV
+  , CommitIssue(..)
   ) where
 
 import           Control.Monad
@@ -19,6 +20,12 @@ import qualified Data.Vector                as V
 import           GHC.Generics               (Generic)
 import           Text.HTML.Scalpel          hiding (URL)
 
+data Commit = Commit
+  { bugIdC       :: ByteString
+  , oldCommitIdC :: ByteString
+  , newCommitIdC :: ByteString
+  } deriving (Show,Generic)
+
 data CommitIssue = CommitIssue
   { bugId       :: ByteString
   , oldCommitId :: ByteString
@@ -26,9 +33,13 @@ data CommitIssue = CommitIssue
   , issueId     :: ByteString
   } deriving (Show,Generic)
 
-instance FromRecord CommitIssue where
-  parseRecord v = CommitIssue <$> v .! 0 <*> v .! 1 <*> v .! 2 <*> v .! 0
+instance FromRecord Commit
+instance ToRecord Commit
+
+instance FromRecord CommitIssue
 instance ToRecord CommitIssue
+
+-- ↓broken codes
 
 linkGithubCommitToIssueCSV :: String -> FilePath -> FilePath -> IO ()
 linkGithubCommitToIssueCSV prefix inCSV outCSV = do

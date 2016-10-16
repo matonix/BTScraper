@@ -1,11 +1,9 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Jira
-    ( scrapeJiraURL
-    , parseIssue
-    , makeJiraStats
-    , makeJiraStatsCSV
-    ) where
+  ( scrapeJiraURL
+  , parseIssue
+  , makeJiraStats
+  , makeJiraStatsCSV
+  ) where
 
 import           Control.Monad
 import           Csv
@@ -18,7 +16,8 @@ import           Data.Maybe                 (catMaybes, fromJust)
 import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
 import           Debug.Trace
-import           GHC.Generics               (Generic)
+import           GithubCommit               (CommitIssue)
+import qualified GithubCommit               as G
 import           Stats                      (Stats)
 import qualified Stats                      as S
 import           Text.HTML.Scalpel
@@ -37,22 +36,13 @@ data JiraTransition = JiraTransition
   , lastExecutionDate  :: [ByteString]
   } deriving Show
 
-data CommitIssue = CommitIssue
-  { bugId       :: Int
-  , oldCommitId :: ByteString
-  , newCommitId :: ByteString
-  , issueId     :: Int
-  } deriving (Show,Generic)
-
-instance FromRecord CommitIssue
-
-makeJiraStatsCSV :: FilePath -> IO [Stats]
-makeJiraStatsCSV dbCsv = do
+makeJiraStatsCSV :: String -> FilePath -> IO [Stats]
+makeJiraStatsCSV prefixId dbCsv = do
   Right db <- fmap V.toList <$> readCSV dbCsv
-  let prefix = "https://issues.apache.org/jira/browse/LANG-"
+  let prefix = "https://issues.apache.org/jira/browse/" ++ prefixId
   let suffix = "?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
-  let urls = map ((\i -> prefix++show i++suffix) . issueId) db :: [URL]
-  map (parseIssue db) .catMaybes <$> mapM scrapeJiraURL urls
+  let urls = map ((\i -> prefix++show i++suffix) . G.issueId) db :: [URL]
+  map (parseIssue db) . catMaybes <$> mapM scrapeJiraURL urls
 
 -- for test
 makeJiraStats :: URL -> FilePath -> IO Stats
@@ -92,7 +82,7 @@ parseIssue db ji = S.Stats issueid period priority reopen commits
     period = sum . map parseTimeToSeconds . timeInSourceStatus . jiraTransition $ ji
     priority = jiraPriority ji
     reopen = (`div` 2) . length . filter isReopen . transition . jiraTransition $ ji
-    commits = map newCommitId $ filter ((== issueid) . issueId) db
+    commits = map G.newCommitId $ filter ((== issueid) . fst . fromJust . BS.readInt . G.issueId) db
 
 parseTimeToSeconds :: ByteString -> Int
 parseTimeToSeconds = sum . map parseEach . filter ((>1) . BS.length) . BS.words

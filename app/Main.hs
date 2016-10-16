@@ -12,9 +12,12 @@ import           System.Directory
 import           System.Environment     (getArgs)
 
 workingDir = "/home/maton/experimentBTS/"
-queryCsv = "Lang-commit-issue-db.csv"
-statsCsv = "Lang-stats.csv"
-main = scrapeWithCache queryPath makeJiraStatsCSV $ writeStats statsPath where
+-- queryCsv = "Lang-commit-issue-db.csv"
+-- statsCsv = "Lang-stats.csv"
+prefixId = "MATH-"
+queryCsv = "Math-commit-issue-db.csv"
+statsCsv = "Math-stats.csv"
+main = scrapeWithCache queryPath (makeJiraStatsCSV prefixId) $ writeStats statsPath where
   queryPath = workingDir ++ queryCsv
   statsPath = workingDir ++ statsCsv
 
