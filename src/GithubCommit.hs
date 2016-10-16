@@ -39,7 +39,7 @@ instance ToRecord Commit
 instance FromRecord CommitIssue
 instance ToRecord CommitIssue
 
--- ↓broken codes
+-- ↓maybe broken codes
 
 linkGithubCommitToIssueCSV :: String -> FilePath -> FilePath -> IO ()
 linkGithubCommitToIssueCSV prefix inCSV outCSV = do

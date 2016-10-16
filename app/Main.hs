@@ -4,7 +4,7 @@ import           Cache
 import           Control.Exception.Base
 import           Data.Maybe
 import           Github
-import           GithubCommit
+-- import           GithubCommit
 import           Jira
 import           Python
 import           Stats
@@ -12,14 +12,24 @@ import           System.Directory
 import           System.Environment     (getArgs)
 
 workingDir = "/home/maton/experimentBTS/"
--- queryCsv = "Lang-commit-issue-db.csv"
--- statsCsv = "Lang-stats.csv"
-prefixId = "MATH-"
-queryCsv = "Math-commit-issue-db.csv"
-statsCsv = "Math-stats.csv"
-main = scrapeWithCache queryPath (makeJiraStatsCSV prefixId) $ writeStats statsPath where
+queryCsv = "Closure-commit-issue-db.csv"
+statsCsv = "Closure-stats.csv"
+main = scrapeWithCache queryPath makeGithubStatsCSV $ writeStats statsPath where
   queryPath = workingDir ++ queryCsv
   statsPath = workingDir ++ statsCsv
+
+-- db = "/home/maton/experimentBTS/Closure-commit-issue-db.csv"
+-- main = makeGithubStatsCSV db >>= print
+
+-- workingDir = "/home/maton/experimentBTS/"
+-- queryCsv = "Lang-commit-issue-db.csv"
+-- statsCsv = "Lang-stats.csv"
+-- prefixId = "MATH-"
+-- queryCsv = "Math-commit-issue-db.csv"
+-- statsCsv = "Math-stats.csv"
+-- main = scrapeWithCache queryPath (makeJiraStatsCSV prefixId) $ writeStats statsPath where
+--   queryPath = workingDir ++ queryCsv
+--   statsPath = workingDir ++ statsCsv
 
 -- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
 -- main = makeJiraStatsCSV db >>= print
@@ -44,10 +54,10 @@ main = scrapeWithCache queryPath (makeJiraStatsCSV prefixId) $ writeStats statsP
 -- main = linkGithubCommitToIssueCSV prefix inFile outFile
 
 -- url = "https://github.com/google/closure-compiler/issues/2049"
--- main = scrapeGithubURL url >>= print
+-- main = makeGithubStats url >>= print
 
--- issue = 2049
--- main = scrapeGithubIssue issue >>= printStats . maybeToList
+-- url = "https://github.com/google/closure-compiler/issues/2049"
+-- main = scrapeGithubURL url >>= print
 
 -- workingDir = "/home/maton/experimentBTS/"
 -- queryCsv = "query02.csv"

@@ -1,7 +1,7 @@
 module Github
   ( scrapeGithubURL
   , makeGithubStats
-  -- , makeGithubStatsCSV
+  , makeGithubStatsCSV
   ) where
 
 import           Control.Monad
@@ -40,13 +40,20 @@ data GithubIssue = GithubIssue
   , commitId      :: [ByteString]
   } deriving Show
 
+makeGithubStatsCSV :: FilePath -> IO [Stats]
+makeGithubStatsCSV dbCsv = do
+  Right db <- fmap V.toList <$> readCSV dbCsv
+  let prefix = "https://github.com/google/closure-compiler/issues/"
+  let urls = map ((prefix++) . BS.unpack . G.issueId) db :: [URL]
+  return urls
+  map parseIssue . catMaybes <$> mapM scrapeGithubURL urls
+
+-- for test
+makeGithubStats :: URL -> IO (Maybe Stats)
+makeGithubStats url = fmap parseIssue <$> scrapeGithubURL url
+
 scrapeGithubURL :: URL -> IO (Maybe GithubIssue)
 scrapeGithubURL url = scrapeURL url scrapeIssue
-
-makeGithubStats :: Int -> IO (Maybe Stats)
-makeGithubStats iId = fmap parseIssue <$> scrapeGithubURL url
-  where
-    url = "https://github.com/google/closure-compiler/issues/" ++ show iId
 
 scrapeIssue :: Scraper ByteString GithubIssue
 scrapeIssue = GithubIssue
