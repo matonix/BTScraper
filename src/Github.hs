@@ -35,9 +35,10 @@ import           Text.Regex
 -- for scraping github issue
 
 data GithubIssue = GithubIssue
-  { issueId       :: ByteString
-  , relativeTimes :: [ByteString]
-  , stateClosed   :: [ByteString]
+  { issueId     :: ByteString
+  , openedTime  :: ByteString
+  , closedTime  :: [ByteString]
+  , stateClosed :: [ByteString]
   } deriving Show
 
 makeGithubStatsCSV :: String -> FilePath -> IO [Stats]
@@ -60,9 +61,9 @@ scrapeGithubURL url = scrapeURL url scrapeIssue
 scrapeIssue :: Scraper ByteString GithubIssue
 scrapeIssue = GithubIssue
   <$> text ("span" @: [hasClass "gh-header-number"])
-  <*> attrs "datetime" "relative-time"
+  <*> chroot ("div" @: [hasClass "flex-table-item-primary"]) (attr "datetime" "relative-time")
+  <*> chroots ("div" @: [hasClass "discussion-item-closed"]) (attr "datetime" "relative-time")
   <*> texts ("div" @: [hasClass "state-closed"])
-  -- <*> chroots ("td" @: [hasClass "commit-meta"]) (attr "href" "a")
 
 -- parse into stats
 
@@ -70,16 +71,15 @@ parseIssue :: [CommitIssue] -> GithubIssue -> Stats
 parseIssue db gi = S.Stats iId period priority reopen commits
   where
     iId = fst . fromJust . BS.readInt . BS.tail $ issueId gi
-    period = parsePeriod $ relativeTimes gi
+    period = parsePeriod (openedTime gi) (closedTime gi)
     priority = BS.pack "not available"
     reopen = pred . length $ stateClosed gi
     commits = map G.newCommitId $ filter ((== iId) . fst . fromJust . BS.readInt . G.issueId) db
 
-parsePeriod :: [ByteString] -> Int
-parsePeriod relativeTimes = read . init . show $ diffUTCTime old new where
-  new = minimum times
-  old = maximum times
-  times = map (parseTime . BS.unpack) relativeTimes
+parsePeriod :: ByteString -> [ByteString] -> Int
+parsePeriod opened closed = read . init . show $ diffUTCTime new old where
+  new = parseTime . BS.unpack $ last closed
+  old = parseTime $ BS.unpack opened
   -- "2014-04-29T20:28:46Z"
   parseTime :: String -> UTCTime
   parseTime = parseTimeOrError True defaultTimeLocale "%FT%TZ"
