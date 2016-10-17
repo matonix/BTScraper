@@ -11,21 +11,21 @@ import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
--- workingDir = "/home/maton/experimentBTS/"
--- queryCsv = "Time-commit-issue-db2.csv"
--- statsCsv = "Time-stats2.csv"
--- prefix = "https://github.com/JodaOrg/joda-time/issues/"
--- main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsPath where
---   queryPath = workingDir ++ queryCsv
---   statsPath = workingDir ++ statsCsv
-
 workingDir = "/home/maton/experimentBTS/"
-queryCsv = "Closure-commit-issue-db.csv"
-statsCsv = "Closure-stats2.csv"
-prefix = "https://github.com/google/closure-compiler/issues/"
+queryCsv = "Time-commit-issue-db2.csv"
+statsCsv = "Time-stats2.csv"
+prefix = "https://github.com/JodaOrg/joda-time/issues/"
 main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsPath where
   queryPath = workingDir ++ queryCsv
   statsPath = workingDir ++ statsCsv
+
+-- workingDir = "/home/maton/experimentBTS/"
+-- queryCsv = "Closure-commit-issue-db.csv"
+-- statsCsv = "Closure-stats2.csv"
+-- prefix = "https://github.com/google/closure-compiler/issues/"
+-- main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsPath where
+--   queryPath = workingDir ++ queryCsv
+--   statsPath = workingDir ++ statsCsv
 
 -- db = "/home/maton/experimentBTS/Closure-commit-issue-db.csv"
 -- main = makeGithubStatsCSV db >>= print
@@ -69,7 +69,7 @@ main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsP
 -- prefix = "https://github.com/JodaOrg/joda-time/commits/"
 -- main = linkGithubCommitToIssueCSV prefix inFile outFile
 
--- url = "https://github.com/google/closure-compiler/issues/2049"
+-- url = "https://github.com/google/closure-compiler/issues/936"
 -- main = scrapeGithubURL url >>= print
 
 -- workingDir = "/home/maton/experimentBTS/"

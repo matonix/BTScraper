@@ -61,7 +61,7 @@ scrapeGithubURL url = scrapeURL url scrapeIssue
 scrapeIssue :: Scraper ByteString GithubIssue
 scrapeIssue = GithubIssue
   <$> text ("span" @: [hasClass "gh-header-number"])
-  <*> chroot ("div" @: [hasClass "flex-table-item-primary"]) (attr "datetime" "relative-time")
+  <*> attr "datetime" "relative-time"
   <*> chroots ("div" @: [hasClass "discussion-item-closed"]) (attr "datetime" "relative-time")
   <*> texts ("div" @: [hasClass "state-closed"])
 
