@@ -19,7 +19,8 @@ import           Debug.Trace
 import           Foreign.C.Types
 import           GithubCommit               (CommitIssue)
 import qualified GithubCommit               as G
-import           Stats
+import           Stats                      (Stats)
+import qualified Stats                      as S
 import           Text.HTML.Scalpel
 import           Text.Regex
 
@@ -37,20 +38,21 @@ data GithubIssue = GithubIssue
   { issueId       :: ByteString
   , relativeTimes :: [ByteString]
   , stateClosed   :: [ByteString]
-  , commitId      :: [ByteString]
   } deriving Show
 
-makeGithubStatsCSV :: FilePath -> IO [Stats]
-makeGithubStatsCSV dbCsv = do
+makeGithubStatsCSV :: String -> FilePath -> IO [Stats]
+makeGithubStatsCSV prefix dbCsv = do
   Right db <- fmap V.toList <$> readCSV dbCsv
-  let prefix = "https://github.com/google/closure-compiler/issues/"
   let urls = map ((prefix++) . BS.unpack . G.issueId) db :: [URL]
   return urls
-  map parseIssue . catMaybes <$> mapM scrapeGithubURL urls
+  map (parseIssue db) . catMaybes <$> mapM scrapeGithubURL urls
 
 -- for test
-makeGithubStats :: URL -> IO (Maybe Stats)
-makeGithubStats url = fmap parseIssue <$> scrapeGithubURL url
+makeGithubStats :: URL -> FilePath -> IO Stats
+makeGithubStats url dbCsv = do
+  Just issue <- scrapeGithubURL url
+  Right db <- fmap V.toList <$> readCSV dbCsv
+  return $ parseIssue db issue
 
 scrapeGithubURL :: URL -> IO (Maybe GithubIssue)
 scrapeGithubURL url = scrapeURL url scrapeIssue
@@ -58,27 +60,26 @@ scrapeGithubURL url = scrapeURL url scrapeIssue
 scrapeIssue :: Scraper ByteString GithubIssue
 scrapeIssue = GithubIssue
   <$> text ("span" @: [hasClass "gh-header-number"])
-  <*> texts "relative-time"
-  <*> texts ("svg" @: [hasClass "octicon-issue-closed"])
-  <*> chroots ("td" @: [hasClass "commit-meta"]) (attr "href" "a")
+  <*> attrs "datetime" "relative-time"
+  <*> texts ("div" @: [hasClass "state-closed"])
+  -- <*> chroots ("td" @: [hasClass "commit-meta"]) (attr "href" "a")
 
 -- parse into stats
 
-parseIssue :: GithubIssue -> Stats
-parseIssue issue = Stats
-  (parseIssueId $ issueId issue)
-  (parsePeriod $ relativeTimes issue)
-  (BS.pack "not available")
-  (parseReopen $ stateClosed issue)
-  (parseCommits $ commitId issue)
+parseIssue :: [CommitIssue] -> GithubIssue -> Stats
+parseIssue db gi = S.Stats iId period priority reopen commits
   where
-    parseIssueId = fst . fromJust . BS.readInt . BS.tail
-    parsePeriod relativeTimes = read . init . show $ diffUTCTime new old where
-      new = minimum times
-      old = maximum times
-      times = map (parseTime . BS.unpack) relativeTimes
-      -- Sep 29, 2016
-      parseTime :: String -> UTCTime
-      parseTime = parseTimeOrError True defaultTimeLocale "%b %e, %Y"
-    parseReopen = pred . length
-    parseCommits = map (last . BS.split '/')
+    iId = fst . fromJust . BS.readInt . BS.tail $ issueId gi
+    period = parsePeriod $ relativeTimes gi
+    priority = BS.pack "not available"
+    reopen = pred . length $ stateClosed gi
+    commits = map G.newCommitId $ filter ((== iId) . fst . fromJust . BS.readInt . G.issueId) db
+
+parsePeriod :: [ByteString] -> Int
+parsePeriod relativeTimes = read . init . show $ diffUTCTime old new where
+  new = minimum times
+  old = maximum times
+  times = map (parseTime . BS.unpack) relativeTimes
+  -- "2014-04-29T20:28:46Z"
+  parseTime :: String -> UTCTime
+  parseTime = parseTimeOrError True defaultTimeLocale "%FT%TZ"
