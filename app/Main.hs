@@ -5,19 +5,28 @@ import           Control.Exception.Base
 import           Data.Maybe
 import           Github
 -- import           GithubCommit
-import           Jira
+-- import           Jira
+import           JiraJson
 import           Python
 import           Stats
 import           System.Directory
 import           System.Environment     (getArgs)
 
-workingDir = "/home/maton/experimentBTS/"
-queryCsv = "Time-commit-issue-db2.csv"
-statsCsv = "Time-stats2.csv"
-prefix = "https://github.com/JodaOrg/joda-time/issues/"
-main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsPath where
-  queryPath = workingDir ++ queryCsv
-  statsPath = workingDir ++ statsCsv
+-- workingDir = "/home/maton/experimentBTS/issues2014-2016/"
+-- queryCsv = "joda-time.csv"
+-- statsCsv = "time-stats.csv"
+-- prefix = "https://github.com/JodaOrg/joda-time/issues/"
+-- main = scrapeWithCache queryPath (makeGithubStatsCSV2 prefix) $ writeStats statsPath where
+--   queryPath = workingDir ++ queryCsv
+--   statsPath = workingDir ++ statsCsv
+
+-- workingDir = "/home/maton/experimentBTS/"
+-- queryCsv = "Time-commit-issue-db2.csv"
+-- statsCsv = "Time-stats2.csv"
+-- prefix = "https://github.com/JodaOrg/joda-time/issues/"
+-- main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsPath where
+--   queryPath = workingDir ++ queryCsv
+--   statsPath = workingDir ++ statsCsv
 
 -- workingDir = "/home/maton/experimentBTS/"
 -- queryCsv = "Closure-commit-issue-db.csv"
@@ -37,18 +46,21 @@ main = scrapeWithCache queryPath (makeGithubStatsCSV prefix) $ writeStats statsP
 -- url = "https://github.com/JodaOrg/joda-time/issues/93"
 -- main = scrapeGithubURL url >>= print
 
--- workingDir = "/home/maton/experimentBTS/"
--- queryCsv = "Lang-commit-issue-db.csv"
--- statsCsv = "Lang-stats.csv"
+main = scrapeJira
+
+-- workingDir = "/home/maton/experimentBTS/issues2014-2016/"
 -- prefixId = "MATH-"
--- queryCsv = "Math-commit-issue-db.csv"
--- statsCsv = "Math-stats.csv"
--- main = scrapeWithCache queryPath (makeJiraStatsCSV prefixId) $ writeStats statsPath where
+-- queryCsv = "commons-lang.csv"
+-- statsCsv = "lang-stats.csv"
+-- prefixId = "MATH-"
+-- queryCsv = "commons-math.csv"
+-- statsCsv = "math-stats.csv"
+-- main = scrapeWithCache queryPath (makeJiraStatsCSV2 prefixId) $ writeStats statsPath where
 --   queryPath = workingDir ++ queryCsv
 --   statsPath = workingDir ++ statsCsv
 
--- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
--- main = makeJiraStatsCSV db >>= print
+-- db = "/home/maton/experimentBTS/issues2014-2016/commons-math.csv"
+-- main = makeJiraStatsCSV2 "MATH-" db >>= print
 
 -- db = "/home/maton/experimentBTS/Lang-commit-issue-db.csv"
 -- url = "https://issues.apache.org/jira/browse/LANG-747?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"

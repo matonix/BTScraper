@@ -3,6 +3,7 @@ module Jira
   , parseIssue
   , makeJiraStats
   , makeJiraStatsCSV
+  , makeJiraStatsCSV2
   ) where
 
 import           Control.Monad
@@ -35,6 +36,17 @@ data JiraTransition = JiraTransition
   , lastExecuter       :: [ByteString]
   , lastExecutionDate  :: [ByteString]
   } deriving Show
+
+-- for issues2014-2016
+makeJiraStatsCSV2 :: String -> FilePath -> IO [Stats]
+makeJiraStatsCSV2 prefixId dbCsv = do
+  Right db <- fmap V.toList <$> (readCSV dbCsv :: IO (Either String (Vector LogCsv)))
+  let prefix = "https://issues.apache.org/jira/browse/" ++ prefixId
+  let suffix = "?page=com.googlecode.jira-suite-utilities:transitions-summary-tabpanel"
+  let urls = map ((\i -> prefix++i++suffix) . issueIdC) db :: [URL]
+  -- print urls
+  map parseIssue2 . catMaybes <$> mapM scrapeJiraURL urls
+
 
 makeJiraStatsCSV :: String -> FilePath -> IO [Stats]
 makeJiraStatsCSV prefixId dbCsv = do
@@ -74,6 +86,16 @@ scrapeJiraTransitions = chroot ("div" @: ["id" @= "issue_actions_container"])
   <*> texts ("td" @: ["width" @= "15%", "align" @= "center"])
   <*> texts ("td" @: ["width" @= "18%"] // "a")
   <*> texts ("td" @: ["width" @= "18%", "align" @= "right"])
+
+parseIssue2 :: JiraIssue -> Stats
+parseIssue2 ji = S.Stats issueid period priority reopen commits
+  where
+    issueid = fst . fromJust . BS.readInt . BS.filter isDigit . jiraIssueId $ ji
+    period = sum . map parseTimeToSeconds . timeInSourceStatus . jiraTransition $ ji
+    priority = jiraPriority ji
+    reopen = (`div` 2) . length . filter isReopen . transition . jiraTransition $ ji
+    commits = []
+
 
 parseIssue :: [CommitIssue] -> JiraIssue -> Stats
 parseIssue db ji = S.Stats issueid period priority reopen commits

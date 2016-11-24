@@ -2,6 +2,7 @@ module Github
   ( scrapeGithubURL
   , makeGithubStats
   , makeGithubStatsCSV
+  , makeGithubStatsCSV2
   ) where
 
 import           Control.Monad
@@ -14,6 +15,7 @@ import           Data.Fixed
 import           Data.Int
 import           Data.Maybe                 (catMaybes, fromJust, mapMaybe)
 import           Data.Time
+import           Data.Vector                (Vector)
 import qualified Data.Vector                as V
 import           Debug.Trace
 import           Foreign.C.Types
@@ -41,11 +43,17 @@ data GithubIssue = GithubIssue
   , stateClosed :: [ByteString]
   } deriving Show
 
+-- for issues2014-2016
+makeGithubStatsCSV2 :: String -> FilePath -> IO [Stats]
+makeGithubStatsCSV2 prefix dbCsv = do
+  Right db <- fmap V.toList <$> (readCSV dbCsv :: IO (Either String (Vector LogCsv)))
+  let urls = map ((prefix++) . issueIdC) db :: [URL]
+  map parseIssue2 . catMaybes <$> mapM scrapeGithubURL urls
+
 makeGithubStatsCSV :: String -> FilePath -> IO [Stats]
 makeGithubStatsCSV prefix dbCsv = do
   Right db <- fmap V.toList <$> readCSV dbCsv
   let urls = map ((prefix++) . BS.unpack . G.issueId) db :: [URL]
-  return urls
   map (parseIssue db) . catMaybes <$> mapM scrapeGithubURL urls
 
 -- for test
@@ -66,6 +74,15 @@ scrapeIssue = GithubIssue
   <*> texts ("div" @: [hasClass "state-closed"])
 
 -- parse into stats
+
+parseIssue2 :: GithubIssue -> Stats
+parseIssue2 gi = S.Stats iId period priority reopen commits
+  where
+    iId = fst . fromJust . BS.readInt . BS.tail $ issueId gi
+    period = parsePeriod (openedTime gi) (closedTime gi)
+    priority = BS.pack "not available"
+    reopen = pred . length $ stateClosed gi
+    commits = []
 
 parseIssue :: [CommitIssue] -> GithubIssue -> Stats
 parseIssue db gi = S.Stats iId period priority reopen commits
